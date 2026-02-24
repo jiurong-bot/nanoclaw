@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>九容瑜伽 - 線上預約系統</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #E8A3D0;
+            --primary-dark: #D97FB8;
+            --primary-light: #F0D1E8;
+            --accent: #FFB3D9;
+            --text: #333;
+            --text-light: #666;
+            --bg-light: #FFF9FC;
+            --border: #E8D4E8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-light) 0%, #FFF5FA 100%);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        /* Header */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 2rem 0;
+            box-shadow: 0 4px 15px rgba(232, 163, 208, 0.2);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .logo-sub {
+            font-size: 0.8rem;
+            opacity: 0.9;
+            margin-top: 0.2rem;
+        }
+
+        nav {
+            display: flex;
+            gap: 2rem;
+        }
+
+        nav a {
+            color: white;
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        nav a:hover {
+            opacity: 0.8;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Hero Section */
+        .hero {
+            text-align: center;
+            margin: 3rem 0;
+            padding: 3rem 2rem;
+            background: linear-gradient(135deg, rgba(232, 163, 208, 0.1) 0%, rgba(255, 179, 217, 0.1) 100%);
+            border-radius: 20px;
+            border: 2px solid var(--border);
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+        }
+
+        .hero p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+            margin-bottom: 2rem;
+        }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            border-bottom: 3px solid var(--border);
+        }
+
+        .tab-btn {
+            padding: 1rem 2rem;
+            border: none;
+            background: none;
+            cursor: pointer;
+            font-size: 1rem;
+            color: var(--text-light);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+        }
+
+        .tab-btn.active {
+            color: var(--primary-dark);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-btn:hover {
+            color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Course Grid */
+        .courses-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .course-card {
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(232, 163, 208, 0.15);
+            transition: all 0.3s;
+            border: 2px solid var(--border);
+        }
+
+        .course-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(232, 163, 208, 0.25);
+        }
+
+        .course-image {
+            height: 200px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4rem;
+        }
+
+        .course-info {
+            padding: 1.5rem;
+        }
+
+        .course-info h3 {
+            color: var(--primary-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .course-info p {
+            color: var(--text-light);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .course-meta {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .meta-item {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+            font-weight: 600;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(232, 163, 208, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            border: 2px solid var(--primary);
+        }
+
+        .btn-secondary:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Schedule Section */
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(232, 163, 208, 0.15);
+        }
+
+        .schedule-table th {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        .schedule-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .schedule-table tbody tr:hover {
+            background: var(--bg-light);
+        }
+
+        .time-badge {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .capacity {
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        .capacity.full {
+            color: #e74c3c;
+            font-weight: 600;
+        }
+
+        /* Booking Form */
+        .booking-form {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(232, 163, 208, 0.15);
+            max-width: 500px;
+            margin: 2rem auto;
+            border: 2px solid var(--border);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--primary-dark);
+            font-weight: 600;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(232, 163, 208, 0.1);
+        }
+
+        /* Footer */
+        footer {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 4rem;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 2rem;
+            border-radius: 15px;
+            max-width: 500px;
+            width: 90%;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            animation: slideUp 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .modal-header h2 {
+            color: var(--primary-dark);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--text-light);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            nav {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+
+            .hero h1 {
+                font-size: 1.8rem;
+            }
+
+            .courses-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs {
+                flex-direction: column;
+            }
+        }
+
+        /* Success Message */
+        .success-message {
+            background: #d4edda;
+            border: 2px solid #28a745;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            display: none;
+        }
+
+        .success-message.show {
+            display: block;
+            animation: slideUp 0.3s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="header-content">
+            <div>
+                <div class="logo">🧘 九容瑜伽</div>
+                <div class="logo-sub">Jiuxi Yoga Studio</div>
+            </div>
+            <nav>
+                <a href="#courses">課程</a>
+                <a href="#schedule">時間表</a>
+                <a href="#booking">預約</a>
+                <a href="#contact">聯絡</a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <!-- Hero Section -->
+        <section class="hero">
+            <h1>找到內在的平靜</h1>
+            <p>九容瑜伽，陪伴你探索身心靈的和諧。線上預約你的專屬課程。</p>
+        </section>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('courses')">課程</button>
+            <button class="tab-btn" onclick="switchTab('schedule')">時間表</button>
+            <button class="tab-btn" onclick="switchTab('booking')">立即預約</button>
+        </div>
+
+        <!-- Courses Tab -->
+        <div id="courses" class="tab-content active">
+            <div class="courses-grid">
+                <div class="course-card">
+                    <div class="course-image">🌅</div>
+                    <div class="course-info">
+                        <h3>朝陽瑜伽</h3>
+                        <p>喚醒身體能量，開啟美好的一天。適合初學者。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">45 分鐘</span>
+                            <span class="meta-item">$300</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('朝陽瑜伽')">預約</button>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-image">🌙</div>
+                    <div class="course-info">
+                        <h3>寧靜冥想</h3>
+                        <p>舒緩身心，釋放壓力的深度冥想課程。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">60 分鐘</span>
+                            <span class="meta-item">$350</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('寧靜冥想')">預約</button>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-image">💪</div>
+                    <div class="course-info">
+                        <h3>力量瑜伽</h3>
+                        <p>強化肌肉，提升體能的動態課程。適合進階學員。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">50 分鐘</span>
+                            <span class="meta-item">$380</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('力量瑜伽')">預約</button>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-image">🧘</div>
+                    <div class="course-info">
+                        <h3>柔和伸展</h3>
+                        <p>溫和的伸展課程，改善靈活性和代謝。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">45 分鐘</span>
+                            <span class="meta-item">$300</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('柔和伸展')">預約</button>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-image">❤️</div>
+                    <div class="course-info">
+                        <h3>心靈醒覺</h3>
+                        <p>呼吸運動與冥想結合，找到內心的平靜。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">75 分鐘</span>
+                            <span class="meta-item">$400</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('心靈醒覺')">預約</button>
+                    </div>
+                </div>
+
+                <div class="course-card">
+                    <div class="course-image">👨‍👩‍👧</div>
+                    <div class="course-info">
+                        <h3>親子瑜伽</h3>
+                        <p>家長與孩子一起享受瑜伽的樂趣。</p>
+                        <div class="course-meta">
+                            <span class="meta-item">40 分鐘</span>
+                            <span class="meta-item">$250</span>
+                        </div>
+                        <button class="btn btn-primary" onclick="openBookingModal('親子瑜伽')">預約</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Schedule Tab -->
+        <div id="schedule" class="tab-content">
+            <h2 style="color: var(--primary-dark); margin-bottom: 1.5rem;">每週課程時間表</h2>
+            <table class="schedule-table">
+                <thead>
+                    <tr>
+                        <th>時間</th>
+                        <th>課程</th>
+                        <th>教練</th>
+                        <th>學員人數</th>
+                        <th>操作</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="time-badge">周一 7:00</span></td>
+                        <td>朝陽瑜伽</td>
+                        <td>李老師</td>
+                        <td class="capacity">12/15</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('朝陽瑜伽')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周一 19:00</span></td>
+                        <td>力量瑜伽</td>
+                        <td>王教練</td>
+                        <td class="capacity">15/15</td>
+                        <td><button class="btn btn-secondary" disabled>已滿</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周二 10:00</span></td>
+                        <td>寧靜冥想</td>
+                        <td>陳老師</td>
+                        <td class="capacity">8/12</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('寧靜冥想')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周三 18:00</span></td>
+                        <td>柔和伸展</td>
+                        <td>林教練</td>
+                        <td class="capacity">10/15</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('柔和伸展')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周四 9:00</span></td>
+                        <td>親子瑜伽</td>
+                        <td>楊老師</td>
+                        <td class="capacity">6/10</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('親子瑜伽')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周五 19:30</span></td>
+                        <td>心靈醒覺</td>
+                        <td>劉老師</td>
+                        <td class="capacity">11/15</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('心靈醒覺')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周六 8:00</span></td>
+                        <td>朝陽瑜伽</td>
+                        <td>李老師</td>
+                        <td class="capacity">14/15</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('朝陽瑜伽')">預約</button></td>
+                    </tr>
+                    <tr>
+                        <td><span class="time-badge">周日 10:00</span></td>
+                        <td>心靈醒覺</td>
+                        <td>劉老師</td>
+                        <td class="capacity">13/15</td>
+                        <td><button class="btn btn-secondary" onclick="openBookingModal('心靈醒覺')">預約</button></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Booking Tab -->
+        <div id="booking" class="tab-content">
+            <div class="success-message" id="successMessage">
+                ✓ 預約成功！我們會在 24 小時內確認您的預約。
+            </div>
+            <form class="booking-form" id="bookingForm">
+                <h2 style="color: var(--primary-dark); margin-bottom: 1.5rem;">線上預約表單</h2>
+                
+                <div class="form-group">
+                    <label for="course">選擇課程</label>
+                    <select id="course" required>
+                        <option value="">-- 請選擇課程 --</option>
+                        <option value="朝陽瑜伽">朝陽瑜伽</option>
+                        <option value="寧靜冥想">寧靜冥想</option>
+                        <option value="力量瑜伽">力量瑜伽</option>
+                        <option value="柔和伸展">柔和伸展</option>
+                        <option value="心靈醒覺">心靈醒覺</option>
+                        <option value="親子瑜伽">親子瑜伽</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="date">選擇日期</label>
+                    <input type="date" id="date" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="time">選擇時間</label>
+                    <select id="time" required>
+                        <option value="">-- 請選擇時間 --</option>
+                        <option value="07:00">7:00 AM</option>
+                        <option value="09:00">9:00 AM</option>
+                        <option value="10:00">10:00 AM</option>
+                        <option value="18:00">6:00 PM</option>
+                        <option value="19:00">7:00 PM</option>
+                        <option value="19:30">7:30 PM</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="name">姓名</label>
+                    <input type="text" id="name" placeholder="請輸入您的姓名" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="email">電郵</label>
+                    <input type="email" id="email" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="phone">電話</label>
+                    <input type="tel" id="phone" placeholder="09xxxxxxxx" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="notes">特別需求（選填）</label>
+                    <textarea id="notes" placeholder="例如：初學者、有舊傷等..." rows="3"></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">確認預約</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Booking Modal -->
+    <div class="modal" id="bookingModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>預約 <span id="modalCourseName"></span></h2>
+                <button class="close-btn" onclick="closeBookingModal()">×</button>
+            </div>
+            <form id="quickBookingForm">
+                <div class="form-group">
+                    <label for="quickName">姓名</label>
+                    <input type="text" id="quickName" placeholder="請輸入您的姓名" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quickEmail">電郵</label>
+                    <input type="email" id="quickEmail" placeholder="example@email.com" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quickPhone">電話</label>
+                    <input type="tel" id="quickPhone" placeholder="09xxxxxxxx" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="quickDate">選擇日期</label>
+                    <input type="date" id="quickDate" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">確認預約</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer id="contact">
+        <p>&copy; 2024 九容瑜伽 Jiuxi Yoga Studio</p>
+        <p>📍 地址：台北市信義區瑜伽中心大樓 | 📞 Tel: 02-XXXX-XXXX | 📧 Email: info@jiuxiyoga.com</p>
+    </footer>
+
+    <script>
+        // Set minimum date to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').setAttribute('min', today);
+        document.getElementById('quickDate').setAttribute('min', today);
+
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-btn');
+            buttons.forEach(btn => btn.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            event.target.classList.add('active');
+
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Booking Modal
+        function openBookingModal(courseName) {
+            document.getElementById('modalCourseName').textContent = courseName;
+            document.getElementById('bookingModal').classList.add('active');
+        }
+
+        function closeBookingModal() {
+            document.getElementById('bookingModal').classList.remove('active');
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('bookingModal');
+            if (event.target === modal) {
+                closeBookingModal();
+            }
+        }
+
+        // Form submission
+        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            showSuccessMessage();
+            this.reset();
+            setTimeout(() => {
+                switchTab('courses');
+            }, 2000);
+        });
+
+        document.getElementById('quickBookingForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            closeBookingModal();
+            showSuccessMessage();
+            this.reset();
+        });
+
+        function showSuccessMessage() {
+            const message = document.getElementById('successMessage');
+            message.classList.add('show');
+            setTimeout(() => {
+                message.classList.remove('show');
+            }, 5000);
+        }
+    </script>
+</body>
+</html>

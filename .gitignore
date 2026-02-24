@@ -1,0 +1,43 @@
+# 環境和私密文件
+.env
+.env.local
+.openclaw/
+*.key
+*.pem
+
+# 個人配置
+MEMORY.md
+IDENTITY.md
+SOUL.md
+USER.md
+BOOTSTRAP.md
+HEARTBEAT.md
+TOOLS.md
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+npm-debug.log
+package-lock.json
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# 壓縮檔
+*.tar.gz
+*.zip

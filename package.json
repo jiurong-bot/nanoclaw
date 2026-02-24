@@ -1,0 +1,21 @@
+{
+  "name": "jiuxi-yoga-line-bot",
+  "version": "1.0.0",
+  "description": "九容瑜伽 LINE Bot 預約系統",
+  "main": "yoga-line-bot.js",
+  "scripts": {
+    "start": "node yoga-line-bot.js",
+    "dev": "nodemon yoga-line-bot.js"
+  },
+  "keywords": ["line", "bot", "yoga", "booking"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@line/bot-sdk": "^7.19.0",
+    "express": "^4.18.2",
+    "dotenv": "^16.0.3"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.20"
+  }
+}
