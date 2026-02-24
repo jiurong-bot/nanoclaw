@@ -1,0 +1,33 @@
+{
+  "name": "nanoclaw",
+  "version": "1.0.0",
+  "description": "NanoClaw - AI Assistant for Termux",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "node test.js",
+    "backup": "node scripts/backup.js",
+    "monitor": "node scripts/monitor.js"
+  },
+  "keywords": [
+    "ai",
+    "telegram",
+    "groq",
+    "assistant"
+  ],
+  "author": "jiurong",
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.3.1",
+    "better-sqlite3": "^9.2.2",
+    "telegraf": "^4.14.0",
+    "groq-sdk": "^0.4.0",
+    "axios": "^1.6.5",
+    "date-fns": "^2.30.0",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^3.0.2"
+  }
+}
