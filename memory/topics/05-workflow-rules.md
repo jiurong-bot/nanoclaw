@@ -187,6 +187,223 @@ git push origin main
 
 ---
 
-**最後更新**：2026-02-25 13:20 AM  
-**約定狀態**：✅ 用户明確確認
-**適用範圍**：所有 NanoClaw 開發工作
+---
+
+## 🟢 **最終工作流確定（2026-02-25 15:35 PM）**
+
+### 用户決策
+> 「以後就用這個方法提供我 index.js」（指：GitHub 下載 + 一行指令）
+
+### 新標準流程（正式生效）
+
+**Step 1：你提出需求**
+```
+「加個天氣功能」
+「修改監控更新頻率」
+「集成 XXX API」
+```
+
+**Step 2：我開發 → GitHub 上傳**
+```
+生成完整代碼 → V87.0-FACTORY.js
+git add + git commit + git push
+```
+
+**Step 3：給你下載指令**
+```bash
+curl -L https://raw.githubusercontent.com/jiurong-bot/nanoclaw/master/V87.0-FACTORY.js -o index.js && npm start
+```
+
+**Step 4：你執行（兩種方式）**
+
+方式 A - 一行完整：
+```bash
+curl -L https://raw.githubusercontent.com/jiurong-bot/nanoclaw/master/V87.0-FACTORY.js -o index.js && npm start
+```
+
+方式 B - 用巨集（更快）：
+```bash
+deploy-nanoclaw      # 自動更新 + 啟動
+# 或
+update-code && start-bot
+```
+
+### 優勢對比
+
+| 比較項 | 舊方法（粘貼代碼） | 新方法（GitHub 下載） |
+|--------|-----------------|-------------------|
+| 手工複製粘貼 | ❌ 需要 | ✅ 無需 |
+| 出錯可能性 | 高 | 低 |
+| 易用性 | 中 | 高 |
+| GitHub 同步 | 手工 | 自動 |
+| 重複部署 | 需重新粘貼 | 一行指令 |
+| 巨集支持 | 無 | ✅ 完全支持 |
+
+### Bash 巨集（已建立）
+
+```bash
+alias deploy-nanoclaw='cd ~/nanoclaw && pkill -f node; sleep 1 && curl -L https://raw.githubusercontent.com/jiurong-bot/nanoclaw/master/V86.0-DRIVE-FIXED.js -o index.js && npm start'
+
+alias update-code='cd ~/nanoclaw && curl -L https://raw.githubusercontent.com/jiurong-bot/nanoclaw/master/V86.0-DRIVE-FIXED.js -o index.js && echo "✅ 更新完成"'
+
+alias start-bot='cd ~/nanoclaw && npm start'
+
+alias stop-bot='pkill -f node'
+
+alias xc='cd ~/nanoclaw'
+```
+
+### 注意事項
+
+⚠️ **每次新版本發布，巨集 URL 需要更新**
+- V87.0-FACTORY 發布時：`V86.0-DRIVE-FIXED.js` → `V87.0-FACTORY.js`
+- 我會告訴你新的下載鏈接
+
+---
+
+## 🔴 **治理系統 - 2026-02-25 16:10 PM**
+
+### 問題根源
+- ❌ V87.0-FACTORY 倉促生成 → 掛掉
+- ❌ 同類錯誤重複（V86.0 重複類 → V87.0 整合失敗）
+- ❌ 無計劃直接改檔 → 難以追溯和修復
+- ❌ 缺乏驗證流程 → 質量難以保證
+
+### 新治理流程（PLAN → READ → CHANGE → QC → PERSIST）
+
+#### Phase 1: PLAN（計劃）
+```
+需求來臨 → 寫計劃文檔
+├─ 改什麼：具體描述
+├─ 為什麼：理由和依據
+├─ 如何改：分步驟說明
+├─ 風險評估：可能的問題
+└─ 回滾方案：失敗時怎麼辦
+```
+
+**範例**（V87.0-FACTORY 應該這樣）：
+```
+計劃文檔：V87.0-FACTORY-PLAN.md
+├─ 問題：需要自動代碼生成
+├─ 方案：5 層架構設計
+├─ 測試計劃：
+│  ├─ Layer 1 單獨測試（需求分析）
+│  ├─ Layer 2 單獨測試（代碼生成）
+│  ├─ Layer 3 單獨測試（整合）
+│  └─ 完整集成測試
+├─ 風險：代碼整合可能失敗 → 解決：先備份 index.js
+└─ 批准：等待用户批准再開發
+```
+
+#### Phase 2: READ（讀）
+```
+開發前必須讀：
+├─ 現有 V86.0-DRIVE 完整代碼
+├─ 相關官方文檔（Node.js、Telegraf）
+├─ 之前的錯誤記錄（從 12-bug-reports.md）
+└─ 版本歷史和變更日誌
+```
+
+#### Phase 3: CHANGE（改）
+```
+改動時：
+├─ 只改必要部分（小步快走）
+├─ 每個改動都有註釋說明
+├─ 備份原始文件
+└─ 不跳過任何步驟
+```
+
+#### Phase 4: QC（質量檢查）
+```
+改好後立即檢查：
+├─ 語法檢查（無重複定義）
+├─ 邏輯驗證（API 調用正確）
+├─ 邊界情況（異常處理）
+└─ 回滾測試（確保能恢復）
+```
+
+#### Phase 5: PERSIST（記錄）
+```
+部署前建檔案：
+├─ CHANGE-REPORT.md：改了什麼，為什麼改
+├─ QC-RESULT.md：檢查結果
+├─ INDEX.md：完整變更索引
+└─ ROLLBACK-PLAN.md：回滾步驟
+```
+
+### 優先級調整
+
+**從前**：
+- 快速 > 穩定
+- 功能多 > 質量好
+- 直接改 > 先計劃
+
+**從現在起**：
+```
+🥇 穩定性 > 新功能
+🥈 可驗證 > 快速
+🥉 可追溯 > 省時間
+```
+
+### 新工作流（實施細節）
+
+**開發流程**：
+```
+1️⃣ 需求來臨
+   用户：「我想要 X 功能」
+
+2️⃣ 寫計劃（PLAN）
+   我提出詳細計劃文檔供批准
+   
+3️⃣ 等待批准
+   用户確認計劃沒問題
+
+4️⃣ 讀現有代碼（READ）
+   我完整研究 V86.0 代碼
+
+5️⃣ 開發 + QC（CHANGE + QC）
+   ├─ 分模塊開發
+   ├─ 每模塊單獨測試
+   ├─ 語法檢查（eslint 級別）
+   └─ 邏輯驗證
+
+6️⃣ 提交變更報告（PERSIST）
+   ├─ 完整的 CHANGE-REPORT
+   ├─ QC 檢查結果
+   ├─ 變更索引
+   └─ 回滾方案
+
+7️⃣ 用户批准後部署
+   部署到手機
+```
+
+### 禁止清單
+
+❌ **不再允許**：
+- 直接改檔未先計劃
+- 倉促生成代碼並部署
+- 跳過 QC 直接上線
+- 無法解釋「改了什麼、為何而改」
+- 同類錯誤重複出現
+- 無變更記錄的修改
+
+✅ **必須做**：
+- 每次改動前寫計劃
+- 改動前讀現有代碼
+- 改動後進行 QC
+- 部署前提交完整報告
+- 建立變更索引（便於回溯）
+- 准備回滾方案
+
+### 受影響的版本
+
+- **V86.0-DRIVE**：穩定版本 ✅（保持不動）
+- **V87.0-FACTORY**：需重新規劃
+- **未來所有版本**：都遵循此流程
+
+---
+
+**最後更新**：2026-02-25 16:10 PM  
+**約定狀態**：✅ 正式確定 + 立即生效
+**適用範圍**：所有 NanoClaw 變更和開發
+**下一步**：遵循新治理流程重新規劃 V87.0-FACTORY

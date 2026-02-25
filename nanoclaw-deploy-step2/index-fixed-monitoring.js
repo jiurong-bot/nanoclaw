@@ -18,7 +18,6 @@ const SOUL_PATH = path.join(ROOT_DIR, 'soul.md');
 const MY_CHAT_ID = "8508766428";
 const VERSION = "V81.0-L2-MONITOR";
 
-// 確保目錄存在
 if (!fs.existsSync(path.dirname(STORAGE_PATH))) {
   fs.mkdirSync(path.dirname(STORAGE_PATH), { recursive: true });
 }
@@ -69,7 +68,6 @@ class MonitoringSystem {
     this.lastAlerts = new Map();
   }
 
-  // 硬體監控
   async getHardwareMetrics() {
     try {
       const metrics = {
@@ -229,7 +227,6 @@ class MonitoringSystem {
 
     let score = 100;
     
-    // 減分項
     if (this.metrics.memory.usedPercent > 80) score -= 20;
     if (this.metrics.cpu.load1 > 2) score -= 10;
     if (this.metrics.battery.percentage < 20) score -= 15;
@@ -240,7 +237,7 @@ class MonitoringSystem {
   }
 
   generateDashboard() {
-    if (!this.metrics) return '📊 暫無數據';
+    if (!this.metrics) return '📊 暫無數據，請稍候...';
 
     const m = this.metrics;
     const score = this.calculateHealthScore();
@@ -324,20 +321,17 @@ class MonitoringSystem {
     }
   }
 
-  start() {
+  async start() {
     console.log('🔍 監控系統已啟動');
 
-    // 60 秒硬體監控
+    // 立即執行一次
+    await this.getHardwareMetrics();
+    console.log('✅ 首次監控數據已採集');
+
+    // 設定定時任務
     setInterval(() => this.getHardwareMetrics(), 60000);
-
-    // 120 秒軟體監控
     setInterval(() => this.checkDependencies(), 120000);
-
-    // 60 秒告警檢測
     setInterval(() => this.checkAndAlert(), 60000);
-
-    // 首次立即執行
-    this.getHardwareMetrics();
   }
 }
 
@@ -447,8 +441,20 @@ bot.command('help', (ctx) => {
   ctx.replyWithMarkdown(COMMANDS_LIST);
 });
 
-bot.command('monitor', (ctx) => {
-  ctx.reply(monitor.generateDashboard());
+bot.command('monitor', async (ctx) => {
+  try {
+    // 先採集最新數據
+    await monitor.getHardwareMetrics();
+    
+    // 如果還是沒有數據，返回提示
+    if (!monitor.metrics) {
+      return ctx.reply('📊 數據採集中，請稍候...');
+    }
+    
+    ctx.reply(monitor.generateDashboard());
+  } catch (e) {
+    ctx.reply('❌ 監控面板加載失敗');
+  }
 });
 
 bot.command('status', async (ctx) => {
@@ -606,8 +612,8 @@ const initAthena = async () => {
     await bot.launch({ dropPendingUpdates: true });
     console.log("✅ Bot 已啟動並監聽");
 
-    // 啟動監控系統
-    monitor.start();
+    // 啟動監控系統（現在是 async）
+    await monitor.start();
 
   } catch (err) {
     console.error(`❌ 啟動失敗: ${err.message}`);

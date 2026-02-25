@@ -18,7 +18,6 @@ const SOUL_PATH = path.join(ROOT_DIR, 'soul.md');
 const MY_CHAT_ID = "8508766428";
 const VERSION = "V81.0-L2-MONITOR";
 
-// 確保目錄存在
 if (!fs.existsSync(path.dirname(STORAGE_PATH))) {
   fs.mkdirSync(path.dirname(STORAGE_PATH), { recursive: true });
 }
@@ -49,299 +48,139 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
 
-// --- 2. 監控系統 ---
+// --- 2. 簡化監控系統 ---
 
 class MonitoringSystem {
-  constructor(db, bot, myChartId) {
-    this.db = db;
-    this.bot = bot;
-    this.myChatId = myChartId;
-    this.metrics = null;
-    this.alerts = [];
+  constructor() {
     this.samples = [];
+    this.lastAlerts = new Map();
     this.thresholds = {
-      cpu: 85,
       memory: 90,
       battery: 20,
       temperature: 60,
       disk: 85
     };
-    this.lastAlerts = new Map();
   }
 
-  // 硬體監控
-  async getHardwareMetrics() {
-    try {
-      const metrics = {
-        timestamp: new Date().toISOString(),
-        cpu: this.getCpuMetrics(),
-        memory: this.getMemoryMetrics(),
-        battery: this.getBatteryMetrics(),
-        disk: this.getDiskMetrics(),
-        network: this.getNetworkMetrics(),
-        temperature: this.getTemperature()
-      };
-      
-      this.metrics = metrics;
-      this.samples.push(metrics);
-      
-      if (this.samples.length > 100) {
-        this.samples.shift();
-      }
-      
-      return metrics;
-    } catch (e) {
-      console.error('硬體監控錯誤:', e.message);
-      return null;
-    }
-  }
+  getSystemInfo() {
+    const info = {
+      timestamp: new Date().toISOString(),
+      cpu: {},
+      memory: {},
+      battery: {},
+      disk: {},
+      network: { status: '?' },
+      temperature: {}
+    };
 
-  getCpuMetrics() {
+    // CPU
     try {
       const load = os.loadavg();
-      return {
+      info.cpu = {
         load1: load[0].toFixed(2),
         load5: load[1].toFixed(2),
         load15: load[2].toFixed(2)
       };
     } catch (e) {
-      return { load1: 0, load5: 0, load15: 0 };
+      info.cpu = { load1: '?', load5: '?', load15: '?' };
     }
-  }
 
-  getMemoryMetrics() {
+    // Memory
     try {
       const total = os.totalmem();
       const free = os.freemem();
       const used = total - free;
       const usedPercent = Math.round((used / total) * 100);
-      
-      return {
+      info.memory = {
         total: Math.round(total / 1024 / 1024),
         free: Math.round(free / 1024 / 1024),
         used: Math.round(used / 1024 / 1024),
         usedPercent: usedPercent
       };
     } catch (e) {
-      return { total: 0, free: 0, used: 0, usedPercent: 0 };
+      info.memory = { total: '?', free: '?', used: '?', usedPercent: '?' };
     }
-  }
 
-  getBatteryMetrics() {
+    // Battery
     try {
       const batteryStatus = JSON.parse(
-        execSync('termux-battery-status').toString()
+        execSync('termux-battery-status').toString().trim()
       );
-      return {
-        percentage: batteryStatus.percentage,
-        temperature: parseFloat(batteryStatus.temperature),
-        health: batteryStatus.health,
-        status: batteryStatus.status
+      info.battery = {
+        percentage: batteryStatus.percentage || '?',
+        temperature: parseFloat(batteryStatus.temperature) || '?',
+        health: batteryStatus.health || '?'
+      };
+      info.temperature = {
+        value: parseFloat(batteryStatus.temperature) || '?',
+        status: (parseFloat(batteryStatus.temperature) || 0) > 60 ? '🔴' : (parseFloat(batteryStatus.temperature) || 0) > 50 ? '🟠' : '🟢'
       };
     } catch (e) {
-      return { percentage: 0, temperature: 0, health: 'unknown', status: 'unknown' };
+      info.battery = { percentage: '?', temperature: '?', health: '?' };
+      info.temperature = { value: '?', status: '❓' };
     }
-  }
 
-  getDiskMetrics() {
+    // Disk
     try {
       const output = execSync("df -h / | tail -1 | awk '{print $5}'").toString().trim();
-      const usedPercent = parseInt(output);
-      
-      return {
+      const usedPercent = parseInt(output) || '?';
+      info.disk = {
         usedPercent: usedPercent,
-        status: usedPercent > 95 ? '🔴 Critical' : usedPercent > 80 ? '⚠️ Warning' : '✅ OK'
+        status: usedPercent > 95 ? '🔴' : usedPercent > 80 ? '⚠️' : '✅'
       };
     } catch (e) {
-      return { usedPercent: 0, status: '❓' };
+      info.disk = { usedPercent: '?', status: '❓' };
     }
-  }
 
-  getNetworkMetrics() {
+    // Network
     try {
-      execSync('ping -c 1 -W 1 8.8.8.8').toString();
-      return { connected: true, status: '🟢' };
+      execSync('ping -c 1 -W 1 8.8.8.8 >/dev/null 2>&1');
+      info.network = { status: '🟢' };
     } catch (e) {
-      return { connected: false, status: '🔴' };
+      info.network = { status: '🔴' };
     }
+
+    this.samples.push(info);
+    if (this.samples.length > 100) this.samples.shift();
+
+    return info;
   }
 
-  getTemperature() {
-    try {
-      const batteryStatus = JSON.parse(
-        execSync('termux-battery-status').toString()
-      );
-      const temp = parseFloat(batteryStatus.temperature);
-      return {
-        value: temp,
-        status: temp > 60 ? '🔴' : temp > 50 ? '🟠' : '🟢'
-      };
-    } catch (e) {
-      return { value: 0, status: '❓' };
-    }
-  }
-
-  detectMemoryLeak() {
-    if (this.samples.length < 5) {
-      return { detected: false, trend: '↔️' };
-    }
-
-    const recentSamples = this.samples.slice(-5);
-    const memoryTrend = recentSamples.map(s => s.memory.usedPercent);
-    
-    let rising = 0;
-    for (let i = 1; i < memoryTrend.length; i++) {
-      if (memoryTrend[i] > memoryTrend[i-1]) rising++;
-    }
-
-    const detected = rising >= 4;
-    
-    return {
-      detected: detected,
-      trend: detected ? '⚠️ Leak' : '✅',
-      rate: detected ? '+' + (memoryTrend[4] - memoryTrend[0]).toFixed(1) + '%' : '穩定'
-    };
-  }
-
-  checkDependencies() {
-    try {
-      const essentials = ['telegraf', 'groq-sdk', 'dotenv', 'lowdb', 'axios'];
-      const nodeModulesPath = '/root/nanoclaw/node_modules';
-      
-      let count = 0;
-      for (const dep of essentials) {
-        if (fs.existsSync(path.join(nodeModulesPath, dep))) {
-          count++;
-        }
-      }
-      
-      return {
-        status: count === essentials.length ? '✅' : '⚠️',
-        count: count
-      };
-    } catch (e) {
-      return { status: '❓', count: 0 };
-    }
-  }
-
-  calculateHealthScore() {
-    if (!this.metrics) return 50;
-
+  calculateHealthScore(info) {
     let score = 100;
     
-    // 減分項
-    if (this.metrics.memory.usedPercent > 80) score -= 20;
-    if (this.metrics.cpu.load1 > 2) score -= 10;
-    if (this.metrics.battery.percentage < 20) score -= 15;
-    if (this.metrics.temperature.value > 55) score -= 10;
-    if (!this.metrics.network.connected) score -= 25;
+    try {
+      if (info.memory.usedPercent && info.memory.usedPercent > 80) score -= 20;
+      if (info.battery.percentage && info.battery.percentage < 20) score -= 15;
+      if (info.temperature.value && info.temperature.value > 55) score -= 10;
+      if (info.network.status === '🔴') score -= 25;
+    } catch (e) {
+      // 忽略計算錯誤
+    }
 
     return Math.max(0, Math.min(100, score));
   }
 
   generateDashboard() {
-    if (!this.metrics) return '📊 暫無數據';
-
-    const m = this.metrics;
-    const score = this.calculateHealthScore();
+    const info = this.getSystemInfo();
+    const score = this.calculateHealthScore(info);
     const scoreBar = '█'.repeat(Math.round(score / 5)) + '░'.repeat(20 - Math.round(score / 5));
 
     return `🛡️ **雅典娜監控面板 ${VERSION}**
 ━━━━━━━━━━━━━━━━━━━━━
 📊 硬體狀態：
-  CPU: ${m.cpu.load1} | 內存: ${m.memory.usedPercent}%
-  電池: ${m.battery.percentage}% | 溫度: ${m.temperature.value}°C ${m.temperature.status}
-  磁盤: ${m.disk.usedPercent}% ${m.disk.status}
-  網絡: ${m.network.status}
+  CPU: ${info.cpu.load1} | 內存: ${info.memory.usedPercent}%
+  電池: ${info.battery.percentage}% | 溫度: ${info.temperature.value}°C ${info.temperature.status}
+  磁盤: ${info.disk.usedPercent}% ${info.disk.status}
+  網絡: ${info.network.status}
 
 💚 整體評分：${score}/100
   ${scoreBar}
-
-⚙️ 系統檢測：
-  內存洩漏: ${this.detectMemoryLeak().trend}
-  依賴: ${this.checkDependencies().status}
 ━━━━━━━━━━━━━━━━━━━━━`;
-  }
-
-  async checkAndAlert() {
-    try {
-      const hw = await this.getHardwareMetrics();
-      if (!hw) return;
-
-      const alerts = [];
-
-      if (hw.cpu.load1 > 2) {
-        alerts.push({ level: 'P2', title: '⚠️ CPU 高', msg: `負載: ${hw.cpu.load1}` });
-      }
-
-      if (hw.memory.usedPercent > this.thresholds.memory) {
-        alerts.push({ level: 'P1', title: '🔴 內存', msg: `${hw.memory.usedPercent}%` });
-      }
-
-      if (hw.battery.percentage < this.thresholds.battery) {
-        alerts.push({ level: 'P1', title: '🔋 電池低', msg: `${hw.battery.percentage}%` });
-      }
-
-      if (hw.temperature.value > this.thresholds.temperature) {
-        alerts.push({ level: 'P0', title: '🌡️ 過熱', msg: `${hw.temperature.value}°C` });
-      }
-
-      if (hw.disk.usedPercent > this.thresholds.disk) {
-        alerts.push({ level: 'P2', title: '💿 磁盤', msg: `${hw.disk.usedPercent}%` });
-      }
-
-      if (!hw.network.connected) {
-        alerts.push({ level: 'P0', title: '📡 離線', msg: '無網絡連接' });
-      }
-
-      for (const alert of alerts) {
-        const key = alert.title;
-        const lastTime = this.lastAlerts.get(key);
-        
-        if (lastTime && Date.now() - lastTime < 30000) {
-          continue;
-        }
-
-        this.lastAlerts.set(key, Date.now());
-
-        try {
-          await this.bot.telegram.sendMessage(this.myChatId, 
-            `${alert.title}\n${alert.msg}\n[${alert.level}]`);
-          
-          const alertRecord = this.db.get('alerts').value() || [];
-          alertRecord.push({
-            timestamp: new Date().toISOString(),
-            ...alert
-          });
-          this.db.set('alerts', alertRecord).write();
-        } catch (e) {
-          console.error('告警推送失敗:', e.message);
-        }
-      }
-
-    } catch (e) {
-      console.error('告警檢測錯誤:', e.message);
-    }
-  }
-
-  start() {
-    console.log('🔍 監控系統已啟動');
-
-    // 60 秒硬體監控
-    setInterval(() => this.getHardwareMetrics(), 60000);
-
-    // 120 秒軟體監控
-    setInterval(() => this.checkDependencies(), 120000);
-
-    // 60 秒告警檢測
-    setInterval(() => this.checkAndAlert(), 60000);
-
-    // 首次立即執行
-    this.getHardwareMetrics();
   }
 }
 
-const monitor = new MonitoringSystem(db, bot, MY_CHAT_ID);
+const monitor = new MonitoringSystem();
 
 // --- 3. 摸魚技能邏輯 ---
 const SlackerSkills = {
@@ -448,7 +287,12 @@ bot.command('help', (ctx) => {
 });
 
 bot.command('monitor', (ctx) => {
-  ctx.reply(monitor.generateDashboard());
+  try {
+    ctx.reply(monitor.generateDashboard());
+  } catch (e) {
+    console.error('Monitor error:', e);
+    ctx.reply('❌ 監控面板加載失敗：' + e.message.substring(0, 50));
+  }
 });
 
 bot.command('status', async (ctx) => {
@@ -456,7 +300,8 @@ bot.command('status', async (ctx) => {
     const b = JSON.parse(execSync('termux-battery-status').toString().trim());
     const uptime = Math.floor((Date.now()-startTime)/1000/3600);
     const soulMemory = (db.get('soul_memory').value() || []).length;
-    const score = monitor.calculateHealthScore();
+    const info = monitor.getSystemInfo();
+    const score = monitor.calculateHealthScore(info);
     
     const statusMsg = `🛡️ **雅典娜治理官儀表板 ${VERSION}**
 ━━━━━━━━━━━━━━━━━━
@@ -605,9 +450,6 @@ const initAthena = async () => {
     
     await bot.launch({ dropPendingUpdates: true });
     console.log("✅ Bot 已啟動並監聽");
-
-    // 啟動監控系統
-    monitor.start();
 
   } catch (err) {
     console.error(`❌ 啟動失敗: ${err.message}`);
